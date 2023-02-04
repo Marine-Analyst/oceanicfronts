@@ -5,11 +5,11 @@ The Marine Analyst is an essential tool for oceanographers, scientists, engineer
 
 # Jupyter notebooks for accessing marine data
 
-Jupyter+R: [![Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Marine-Analyst/Jupyter/HEAD)
+Jupyter+R: [![Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Marine-Analyst/oceanicfronts/HEAD)
 
 # Rmarkdown for accessing Chlorophyll Sandbox
 
-RStudio: [![Binder](http://mybinder.org/badge_logo.svg)](https://ovh.mybinder.org/v2/gh/Marine-Analyst/oceanicfronts/main?urlpath=rstudio)
+RStudio: [![Binder](http://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Marine-Analyst/oceanicfronts/main?urlpath=rstudio)
 
 
 
