@@ -155,66 +155,6 @@ plot(map)
 ```
 Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.
 
-```{r, include=FALSE, results='hide'}
-
-
-size=10000
-
-query<- paste0(' {
-  "size": ',size,',
-  "query": {
-  "bool": {
-  "must": {
-  "match_all": {}
-  },
-  "filter": {
-  "geo_bounding_box": {
-  "geometry.coordinates": {
-            "top_left": {
-              "lat": ',ymax,',
-              "lon": ',xmin,'
-            },
-            "bottom_right": {
-              "lat": ',ymin,',
-              "lon": ',xmax,'
-            }
-  }
-  }
-  }
-  }
-  }
-  }
- ')
-
-my_searchquery <- rjson::toJSON(query)
-
-#http://elk.knowcean.eu/elk/chla_2016-01-01/_search
-#nginx rule :80/elk > :9200 only 'search'
-#url_elk <- 'http://elk.knowcean.eu:9200/chla_'
-#url_elksst <- 'http://elk.knowcean.eu:9200/sst_'
-#url_elksst <- 'http://192.168.0.155:9200/sst_'
-#url_elk <- 'http://192.168.0.155:9200/chla_'
-
-#http://elk.knowcean.eu/elk/sst_2020-02-01/_search?
-url_elk <- 'http://elk.knowcean.eu/elk/chla_'
-url_elksst <- 'http://elk.knowcean.eu/elk/sst_'
-
-i_stack=0
-for (year in 2010:2021) {
-
-month <- c("01","02","03","04","05","06","07","08","09","10","11","12")
-for(month in month) {
-
-data_list<-''
-url_search <- paste0(url_elk,year,'-',month,'-01/_search')
-print(url_search) 
-
-}
-}
-
-
-```
-
 
 
 ```{r, include=FALSE, results='hide'}
@@ -294,11 +234,11 @@ dat_chla <- as.data.frame(myMatrixOrdered_chla)
 
 
 
-p1 <- ggplot(dat,aes(x=gradient,color=gradient,after_stat(count))) + geom_density() + ggtitle(paste0("Year: ",year," Month: ",month))
-plot(p1)
+#p1 <- ggplot(dat,aes(x=gradient,color=gradient,after_stat(count))) + geom_density() + ggtitle(paste0("Year: ",year," Month: ",month))
+#plot(p1)
 
-#p2 <- ggplot(dat, aes(x = lon, y = lat, fill = gradient)) + geom_tile() + scale_fill_gradient2(low = "white", mid = "blue", high = "red3", midpoint = -1.0) + ggtitle(paste0("Year: ",year," Month: ",month))
-#plot(p2)
+p1 <- ggplot(dat, aes(x = lon, y = lat, fill = gradient)) + geom_tile() + scale_fill_gradient2(low = "white", mid = "blue", high = "red3", midpoint = -1.0) + ggtitle(paste0("Year: ",year," Month: ",month))
+plot(p1)
 
 
 #create a raster with a spatial resolution close to the request
