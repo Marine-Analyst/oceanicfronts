@@ -7,6 +7,7 @@ install.packages('zoo')
 install.packages('maptools')
 install.packages("rjson")
 install.packages("dbscan")
+install.packages("fpc")
 
 require(devtools)
 install_version("rmarkdown", version = "2.13", repos = "https://cran.r-project.org")
