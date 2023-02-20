@@ -1,5 +1,3 @@
-packages = c("","rjson","",","m,",",,"dbscan")
-
 install.packages('ggplot2')
 install.packages('ggmap')
 install.packages('raster')
