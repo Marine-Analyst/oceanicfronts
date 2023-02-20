@@ -87,3 +87,626 @@ print (paste("North-Latitude:",round(ymax,2)))
 
 
 
+
+
+
+```{r, include=FALSE, results='hide'}
+
+source_provider <- "Copernicus Marine Service"
+source_provider_url <- "https://marine.copernicus.eu"
+
+## First specify the packages of interest
+packages = c("httr","rjson","ggplot2","raster","maptools","rasterVis","zoo","ggmap","dbscan")
+
+## Now load or install&load all
+package.check <- lapply(
+  packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      install.packages(x, dependencies = TRUE)
+      library(x, character.only = TRUE)
+    }
+  }
+)
+
+product_title <- "SST gradients 2001-2018 trends and anomalies"
+short_description <- "Sea surface temperature is the temperature of the water close to the sea surface. SST is a standard product from satellite-based thermal infra-red sensors, and optical sensors complemented with infrared bands. The gradients are processed from Monthly mean sea surface temperature (in degree-C at 4km resolution) derived from the MODIS-TERRA sensor (Satellite remote sensing Ocean color data)."
+
+```
+
+```{r, include=FALSE, results='hide'}
+## First specify the packages of interest
+packages = c("wq")
+
+## Now load or install&load all
+package.check <- lapply(
+  packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      #install.packages("./wq_0.4.8.tar.gz", repos=NULL)
+      #package reshape2 needed
+      install.packages("'C:/temp/R/wq_0.4.8.tar.gz", repos=NULL)
+      library(x, character.only = TRUE)
+    }
+  }
+)
+
+```
+
+## Defined area
+
+```{r ,echo=FALSE}
+
+sr=SpatialPolygons(list(Polygons(list(Polygon(cbind(c(xmin, xmin, xmax, xmax),c(ymax, ymin, ymin, ymax)))),"1")))
+mpa=SpatialPolygonsDataFrame(sr, data.frame(cbind(1:1), row.names=c("1")))
+value<-(xmax-xmin)*(ymax-ymin)
+if (value > 100) {
+      zoom_value<-6
+} else if (value > 1) {
+      zoom_value<-7
+} else {
+      zoom_value<-8
+}
+base<-get_map(location=c(xmin-1,ymin-1,xmax+1,ymax+1), zoom=zoom_value, maptype="terrain-background", source = "stamen")
+terrain <- ggmap(base)
+map <- terrain + geom_polygon(data=mpa,aes(x=long,y=lat,group=group,fill="mpa"),colour="green",fill="blue",alpha=.1) +
+ggtitle("")+xlab("Longitude")+ylab("Latitude")
+plot(map)
+```
+Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.
+
+```{r, include=FALSE, results='hide'}
+
+
+size=10000
+
+query<- paste0(' {
+  "size": ',size,',
+  "query": {
+  "bool": {
+  "must": {
+  "match_all": {}
+  },
+  "filter": {
+  "geo_bounding_box": {
+  "geometry.coordinates": {
+            "top_left": {
+              "lat": ',ymax,',
+              "lon": ',xmin,'
+            },
+            "bottom_right": {
+              "lat": ',ymin,',
+              "lon": ',xmax,'
+            }
+  }
+  }
+  }
+  }
+  }
+  }
+ ')
+
+my_searchquery <- rjson::toJSON(query)
+
+#http://elk.knowcean.eu/elk/chla_2016-01-01/_search
+#nginx rule :80/elk > :9200 only 'search'
+#url_elk <- 'http://elk.knowcean.eu:9200/chla_'
+#url_elksst <- 'http://elk.knowcean.eu:9200/sst_'
+#url_elksst <- 'http://192.168.0.155:9200/sst_'
+#url_elk <- 'http://192.168.0.155:9200/chla_'
+
+#http://elk.knowcean.eu/elk/sst_2020-02-01/_search?
+url_elk <- 'http://elk.knowcean.eu/elk/chla_'
+url_elksst <- 'http://elk.knowcean.eu/elk/sst_'
+
+i_stack=0
+for (year in 2010:2021) {
+
+month <- c("01","02","03","04","05","06","07","08","09","10","11","12")
+for(month in month) {
+
+data_list<-''
+url_search <- paste0(url_elk,year,'-',month,'-01/_search')
+print(url_search) 
+
+}
+}
+
+
+```
+
+
+
+```{r, include=FALSE, results='hide'}
+
+
+size=10000
+
+query<- paste0(' {
+  "size": ',size,',
+  "query": {
+  "bool": {
+  "must": {
+  "match_all": {}
+  },
+  "filter": {
+  "geo_bounding_box": {
+  "geometry.coordinates": {
+            "top_left": {
+              "lat": ',ymax,',
+              "lon": ',xmin,'
+            },
+            "bottom_right": {
+              "lat": ',ymin,',
+              "lon": ',xmax,'
+            }
+  }
+  }
+  }
+  }
+  }
+  }
+ ')
+
+my_searchquery <- rjson::toJSON(query)
+
+#http://elk.knowcean.eu/elk/chla_2016-01-01/_search
+#nginx rule :80/elk > :9200 only 'search'
+#url_elk <- 'http://elk.knowcean.eu:9200/chla_'
+#url_elksst <- 'http://elk.knowcean.eu:9200/sst_'
+url_elk <- 'http://elk.knowcean.eu/elk/chla_'
+url_elksst <- 'http://elk.knowcean.eu/elk/sst_'
+
+i_stack=0
+for (year in 2010:2021) {
+
+month <- c("01","02","03","04","05","06","07","08","09","10","11","12")
+for(month in month) {
+
+data_list<-''
+url_search <- paste0(url_elk,year,'-',month,'-01/_search')
+print(url_search) 
+
+
+response <- httr::POST(url = url_search,httr::add_headers(.headers = c("Content-Type" = "application/json")), body = fromJSON(my_searchquery), timeout(20))
+data_list <- fromJSON(content(response, as="text"))
+
+lat <- c()
+lon <- c()
+gradient <- c()
+chla <- c()
+
+for (i in 1:length(data_list$hits$hits)) {
+  #print(data_list$hits$hits[[i]]$`_source`$gradient)
+  gradient<-append(gradient,data_list$hits$hits[[i]]$`_source`$gradient)
+  chla<-append(chla,data_list$hits$hits[[i]]$`_source`$chla)
+  lat<-append(lat, data_list$hits$hits[[i]]$`_source`$geometry$coordinates[2])
+  lon<- append(lon,data_list$hits$hits[[i]]$`_source`$geometry$coordinates[1])
+}
+
+myMatrix <- cbind(lon,lat,gradient)
+myMatrixOrdered<-myMatrix[order(myMatrix[,1],decreasing=FALSE),]
+dat <- as.data.frame(myMatrixOrdered)
+
+myMatrix_chla <- cbind(lon,lat,chla)
+myMatrixOrdered_chla<-myMatrix_chla[order(myMatrix_chla[,1],decreasing=FALSE),]
+dat_chla <- as.data.frame(myMatrixOrdered_chla)
+
+
+
+p1 <- ggplot(dat,aes(x=gradient,color=gradient,after_stat(count))) + geom_density() + ggtitle(paste0("Year: ",year," Month: ",month))
+plot(p1)
+
+#p2 <- ggplot(dat, aes(x = lon, y = lat, fill = gradient)) + geom_tile() + scale_fill_gradient2(low = "white", mid = "blue", high = "red3", midpoint = -1.0) + ggtitle(paste0("Year: ",year," Month: ",month))
+#plot(p2)
+
+
+#create a raster with a spatial resolution close to the request
+ncolras<-length(unique(dat$lon))
+nrowras<-length(unique(dat$lat))
+raster0<-raster(ncols=ncolras,nrows=nrowras,xmn=xmin,xmx=xmax,ymn=ymin,ymx=ymax)
+#using rasterize
+dat_raster<-rasterize(x=dat[,1:2],y=raster0,field=dat[,3],fun=mean,na.rm=T)
+plot(dat_raster)
+dat_raster_chla<-rasterize(x=dat_chla[,1:2],y=raster0,field=dat_chla[,3],fun=mean,na.rm=T)
+plot(dat_raster_chla)
+
+names(dat_raster) <- paste(year,"-",month, sep="")
+names(dat_raster_chla) <- paste(year,"-",month, sep="")
+
+if (i_stack == 0) {
+imgs <- dat_raster
+} else {
+imgs <- raster::stack(imgs, dat_raster)
+}
+
+if (i_stack == 0) {
+imgs_chla <- dat_raster_chla
+} else {
+imgs_chla <- raster::stack(imgs_chla, dat_raster_chla)
+}
+
+i_stack=i_stack+1
+
+}
+}
+
+
+```
+
+```{r, include=FALSE, results='hide'}
+
+
+#FUNCTION PLOT PROCESS
+#=================================================================
+mpaprocessplot<-function (imgs, mpa, name, unite, logscale)
+{
+    if (dim(imgs)[3] < 12) {
+        print("Series is too short (ie less than 12 months)")
+    }
+    else {
+        imgsmean <- raster::mean(imgs, na.rm = T)
+        imgsclim <- stackApply(imgs, indices = as.numeric(substr(names(imgs), 7, 8)), fun = mean, na.rm = TRUE)
+        names(imgsclim) <- paste("Month", unique(as.numeric(substr(names(imgs), 7, 8))))
+        titre <- paste(name, " (", unite, ")", sep = "")
+pltall <- rasterVis::levelplot(imgs, zscaleLog = logscale, contour = T, col.regions = topo.colors(100), layout = c(12, NA), names = substr(names(imgs), 2, 8), main = titre)
+        titre <- paste(name, " (", unite, ") ", substr(names(imgs)[1], 2, 8), "-", substr(names(imgs)[dim(imgs)[3]], 2, 8), " average", sep = "")
+pltmean <- rasterVis::levelplot(imgsmean, margin = F, zscaleLog = logscale, contour = T, col.regions = topo.colors(100), main = titre)
+        titre <- paste(name, " (", unite, ") monthly climatology", sep = "")
+pltclim <- rasterVis::levelplot(imgsclim, zscaleLog = logscale, contour = T, col.regions = topo.colors(100), main = titre, names = names(imgsclim))
+        titre <- paste(name, " (", unite, ") monthly boxplot", sep = "")
+        return(list(pltall = pltall, pltmean = pltmean, pltclim = pltclim))
+    }
+}
+
+
+#=================================================================
+mpaprocessplotgradients<-function (imgs, mpa, name, unite, logscale)
+{
+    if (dim(imgs)[3] < 12) {
+        print("Series is too short (ie less than 12 months)")
+    }
+    else {
+        imgsmean <- raster::mean(imgs, na.rm = T)
+        imgsclim <- stackApply(imgs, indices = as.numeric(substr(names(imgs), 7, 8)), fun = mean, na.rm = TRUE)
+        names(imgsclim) <- paste("Month", unique(as.numeric(substr(names(imgs), 7, 8))))
+        titre <- paste(name, " (", unite, ")", sep = "")
+myPal <- RColorBrewer::brewer.pal('Blues', n=9)
+myTheme <- rasterTheme(region = myPal)
+
+
+# if one layer is only NA and logscale is TRUE then it bugs! Solution: replace NA by 0.1. The image is then monochrome
+if (logscale == TRUE ){
+imgs_pltall<-imgs
+for (i in 1:dim(imgs_pltall)[3]){
+if (is.null(imgs_pltall[[i]][values(imgs_pltall[[i]])!="NA"]) == TRUE){
+imgs_pltall[[i]][is.na(imgs_pltall[[i]])] <- 0.1
+}    
+}
+pltall <- rasterVis::levelplot(imgs_pltall, zscaleLog = logscale, contour = F, col.regions = topo.colors(100), layout = c(12, NA), names = substr(names(imgs), 2, 8), at = seq(0, mean(maxValue(imgsmean))*0.15, 0.05), main = titre)
+        titre <- paste(name, " (", unite, ") ", substr(names(imgs)[1], 2, 8), "-", substr(names(imgs)[dim(imgs)[3]], 2, 8), " average", sep = "")
+} else {
+pltall <- rasterVis::levelplot(imgs, zscaleLog = logscale, contour = F, col.regions = topo.colors(100), layout = c(12, NA), names = substr(names(imgs), 2, 8), at = seq(0, mean(maxValue(imgsmean))*0.25, 0.05), main = titre)
+}
+
+titre <- paste(name, " (", unite, ") ", substr(names(imgs)[1], 2, 8), "-", substr(names(imgs)[dim(imgs)[3]], 2, 8), " average", sep = "")
+
+pltmean <- rasterVis::levelplot(imgsmean, margin = F, zscaleLog = logscale, contour = T, col.regions = topo.colors(100), at = seq(0, mean(maxValue(imgsmean))*0.25, 0.05), main = titre)
+        titre <- paste(name, " (", unite, ") monthly climatology", sep = "")
+pltclim <- rasterVis::levelplot(imgsclim, zscaleLog = logscale, contour = T, col.regions = topo.colors(100), main = titre, at = seq(0, mean(maxValue(imgsmean))*0.2, 0.05), names = names(imgsclim))
+        titre <- paste(name, " (", unite, ") monthly boxplot", sep = "")
+        return(list(pltall = pltall, pltmean = pltmean, pltclim = pltclim))
+    }
+}
+
+
+
+
+
+```
+
+
+```{r, include=FALSE, results='hide'}
+
+#processing of rasterstack containing the gradients/fronts data 
+
+#Measurements are in log10. Convert to real values
+
+imgs10<-10^imgs
+
+#processing of data
+
+plt_gradients10<-mpaprocessplotgradients(imgs=imgs10, mpa=mpa, name='Chl-a', unite='fronts', logscale=FALSE)
+
+
+```
+
+
+## Average fronts
+
+```{r, echo=FALSE}
+
+plt_gradients10[[2]]
+
+```
+
+## Monthly climatology
+
+```{r, echo=FALSE}
+
+plt_gradients10[[3]]
+
+```
+
+## Monthly composite
+
+```{r, echo=FALSE}
+
+plt_gradients10[[1]]
+
+```
+
+```{r, include=FALSE, results='hide'}
+#FUNCTION DATA PROCESS
+#=========================================================================
+mpaprocessstat<-function (imgs, mpa, name, unite)
+{
+    datinpoly <- raster::extract(imgs, mpa, df = TRUE, cellnumbers = TRUE)
+    tabdat <- as.vector(as.matrix(datinpoly[, 3:ncol(datinpoly)]))
+    pixelnb <- nrow(datinpoly)
+    tabts <- apply(datinpoly[, 3:ncol(datinpoly)], 2, mean, na.rm = T)
+    fracnbna <- sum(is.na(tabts))/length(tabts)
+    if (fracnbna > 0.2) {
+        print("not enough data for time series analysis")
+        vseason <- NA
+        vtrend <- NA
+        vtot <- NA
+        testtrend <- data.frame(p.value = NA, sen.slope = NA)
+        pltts <- NA
+    }
+    else {
+        startyear <- as.numeric(substr(names(imgs)[1], 2, 5))
+        startmonth <- as.numeric(substr(names(imgs)[1], 7, 8))
+        tsm <- na.approx(ts(tabts, frequency = 12, start = c(startyear,
+            startmonth)), na.rm = FALSE)
+        tsmdec <- stl(tsm, s.window = 12, na.action = na.omit)
+        tsseason <- tsmdec$time.series[, 1]
+        tsremind <- tsm - tsseason
+        linfit <- lm(tsremind ~ c(1:length(tsremind)))
+        tstrend <- ts(predict(linfit), frequency = 12, start = c(startyear,
+            startmonth))
+        tsremind <- tsm - tsseason - tstrend
+        pipo1 <- data.frame(time = as.numeric(time(tsm)), value = as.numeric(tsm),
+            name = "Time series", type = "Original time series and trend")
+        pipo2 <- data.frame(time = as.numeric(time(tsseason)),
+            value = as.numeric(tsseason), name = "Seasonal component",
+            type = "Seasonal and remainder components")
+        pipo3 <- data.frame(time = as.numeric(time(tstrend)),
+            value = as.numeric(tstrend), name = "Trend", type = "Original time series and trend")
+        pipo4 <- data.frame(time = as.numeric(time(tsremind)),
+            value = as.numeric(tsremind), name = "Residual",
+            type = "Seasonal and residual components")
+        pipoall <- rbind(pipo1, pipo2, pipo3, pipo4)
+        pltts <- ggplot(pipoall, aes(x = time, y = value, group = name)) +
+            geom_line() + facet_grid(name ~ ., scales = "free") +
+            ylab(paste(name, " (", unite, ")", sep = ""))
+        vseason <- var(tsseason, na.rm = T)
+        vtrend <- var(tstrend, na.rm = T)
+        vremind <- var(tsremind, na.rm = T)
+        vtot <- vseason + vtrend + vremind
+        testtrend <- mannKen(tstrend)
+pipoa <- subset(pipo1, select=-c(name,type))
+names(pipoa) <- c("time","Time series")
+pipob <- subset(pipo2, select=-c(name,type))
+names(pipob) <- c("time","Seasonal component")
+pipoc <- subset(pipo3, select=-c(name,type))
+names(pipoc) <- c("time","Trend")
+pipod <- subset(pipo4, select=-c(name,type))
+names(pipod) <- c("time","Residual")
+pipox <- merge (pipoa, pipob, by.x="time", by.y="time" )
+pipoy <- merge (pipoc, pipod, by.x="time", by.y="time" )
+datatab <- merge (pipox, pipoy, by.x="time", by.y="time" )
+    }
+    datstat <- data.frame(name = name, unite = unite, timerange = paste(substr(names(imgs)[1],
+        2, 8), substr(names(imgs)[dim(imgs)[3]], 2, 8), sep = "/"),
+        pixelnb = pixelnb, fracnbna = round(sum(is.na(tabdat))/length(tabdat) *
+            100, 2), fractsna = fracnbna * 100, mean = mean(tabdat,
+            na.rm = T), sd = sd(tabdat, na.rm = T), min = min(tabdat,
+            na.rm = T), max = max(tabdat, na.rm = T), varseason = 100 *
+            vseason/vtot, vartrend = 100 * vtrend/vtot, trendtest = testtrend$p.value,
+        sen.slope = testtrend$sen.slope)
+    return(list(stat = datstat, pltts = pltts, datatab=datatab))
+}
+
+```
+
+
+## Seasonal decomposition
+
+
+```{r, include=FALSE, results='hide'}
+
+
+#PROCESSING STAT SST
+#========================================================================
+datstat<-mpaprocessstat(imgs=imgs10,mpa=mpa,name='Gradients',unite='')
+rezsst<-datstat[[1]]
+datatabsst<-datstat[[3]]
+names(datatabsst)[1]<-paste("Time")
+#write.csv(datatabsst, file.path(temp_path,csvfile_name), row.names=FALSE, na="NaN")
+
+
+```
+
+```{r, echo=FALSE}
+
+plot(datstat[[2]])
+
+```
+
+```{r, echo=FALSE}
+
+datstat[[1]]
+
+
+```
+
+
+```{r, include=FALSE, results='hide'}
+
+#FUNCTION PROCESS ANOMALIES
+#========================================================================
+anomalies<-function (imgs, mpa, name, unite, logscale)
+{
+    if (dim(imgs)[3] < 12) {
+        print("Series is too short (ie less than 12 months)")
+    }
+    else {
+                               titre <- paste(name, " (", unite, ")", sep = "")
+                               pltall <- rasterVis::levelplot(imgs, zscaleLog = logscale, contour = F, col.regions = topo.colors(100), names = substr(names(imgs), 2, 8), main = titre)
+                               imgsmean <- raster::mean(imgs, na.rm = T)
+        titre <- paste(name, " (", unite, ") ", substr(names(imgs)[1], 2, 8), "-", substr(names(imgs)[dim(imgs)[3]], 2, 8), " average", sep = "")
+                               pltmean <- rasterVis::levelplot(imgsmean, margin = F, zscaleLog = logscale, contour = F, col.regions = topo.colors(100), main = titre)
+        imgsclim <- stackApply(imgs, indices = as.numeric(substr(names(imgs), 7, 8)), fun = mean, na.rm = TRUE)
+        names(imgsclim) <- paste("Mean", unique(as.numeric(substr(names(imgs), 7, 8))))
+        titre <- paste(name, " (", unite, ") monthly climatology", sep = "")
+                               pltclim <- rasterVis::levelplot(imgsclim, zscaleLog = logscale, contour = T, col.regions = topo.colors(100), main = titre, names = names(imgsclim))
+                               titre <- paste(name, " (", unite, ") monthly anomalies", sep = "")
+                               imgsano<-imgs
+                               for(i in 1:nlayers(imgsano)) {
+                               j<-as.numeric(substr(names(imgsano[[i]]),7,8))
+                               imgsano[[i]]<-imgsano[[i]]-imgsclim[[j]]
+                               }
+                               names(imgsano)<-names(imgs)
+                               pltano <- rasterVis::levelplot(imgsano, zscaleLog = logscale, contour = F, par.settings = BuRdTheme, at = seq(-1.5, 1.5, 0.1), layout = c(12, NA), names = substr(names(imgsano), 2, 8), main = titre)
+                               titre <- paste(name, " (%) monthly anomalies", sep = "")
+                               imgsanopercent<-imgsano/imgs
+                               names(imgsanopercent)<-names(imgs)
+                               pltanopercent <- rasterVis::levelplot(imgsanopercent, zscaleLog = logscale, contour = T, par.settings = BuRdTheme, at = seq(-1.5, 1.5, 0.1), layout = c(12, NA), names = substr(names(imgsanopercent), 2, 8), main = titre)
+                               return(list(pltall = pltall,  pltmean = pltmean, pltclim = pltclim, pltano = pltano, pltanopercent = pltanopercent))
+    }
+}
+
+
+
+```
+
+## Chlorophyll anomalies
+
+```{r, include=FALSE, results='hide'}
+
+aplt_chla<-anomalies(imgs=imgs_chla, mpa=mpa, name='Chl-a anomalies', unite='log10/milligram.m-3', FALSE)
+
+
+
+```
+
+```{r, echo=FALSE}
+
+plot(aplt_chla[[4]])
+
+
+```
+
+
+## Front analysis
+
+Here is an example of one month front analysis. I will be possible to count the fronts, 
+
+```{r, include=FALSE, results='hide'}
+
+## Select year and month
+
+year<-"2021"
+month<-"01"
+
+url_search <- paste0(url_elk,year,'-',month,'-01/_search')
+print(url_search) 
+
+
+response <- httr::POST(url = url_search,httr::add_headers(.headers = c("Content-Type" = "application/json")), body = fromJSON(my_searchquery), timeout(20))
+data_list <- fromJSON(content(response, as="text"))
+
+lat <- c()
+lon <- c()
+gradient <- c()
+chla <- c()
+
+for (i in 1:length(data_list$hits$hits)) {
+  #print(data_list$hits$hits[[i]]$`_source`$gradient)
+  gradient<-append(gradient,data_list$hits$hits[[i]]$`_source`$gradient)
+  chla<-append(chla,data_list$hits$hits[[i]]$`_source`$chla)
+  lat<-append(lat, data_list$hits$hits[[i]]$`_source`$geometry$coordinates[2])
+  lon<- append(lon,data_list$hits$hits[[i]]$`_source`$geometry$coordinates[1])
+}
+
+myMatrix <- cbind(lon,lat,gradient)
+myMatrixOrdered<-myMatrix[order(myMatrix[,1],decreasing=FALSE),]
+dat <- as.data.frame(myMatrixOrdered)
+
+myMatrix_chla <- cbind(lon,lat,chla)
+myMatrixOrdered_chla<-myMatrix_chla[order(myMatrix_chla[,1],decreasing=FALSE),]
+dat_chla <- as.data.frame(myMatrixOrdered_chla)
+
+```
+
+### Map
+
+```{r, echo=FALSE}
+
+p2 <- ggplot(dat, aes(x = lon, y = lat, fill = gradient)) + geom_tile() + scale_fill_gradient2(low = "white", mid = "blue", high = "red3", midpoint = -1.0) + ggtitle(paste0("Year: ",year," Month: ",month))
+plot(p2)
+
+
+```
+
+### Density
+
+```{r, echo=FALSE}
+
+p1 <- ggplot(dat,aes(x=gradient,color=gradient,after_stat(count))) + geom_density() + ggtitle(paste0("Log10 Year: ",year," Month: ",month))
+plot(p1)
+
+```
+
+
+
+```{r, include=FALSE, results='hide'}
+
+d<-dat[!(dat$gradient < -0.8),]
+
+cl2 <- hdbscan(d, minPts = 10)
+cl3<-fpc::dbscan(d$gradient, 0.1, MinPts = 8, scale = FALSE, method = c("hybrid"), seeds = FALSE, showplot = FALSE, countmode = NULL)
+
+```
+
+### Front classification
+
+
+```{r, echo=FALSE}
+
+plot(d, col=cl2$cluster+1, 
+     pch=ifelse(cl2$cluster == 0, 8, 1), # Mark noise as star
+     cex=ifelse(cl2$cluster == 0, 0.1, 0.01))
+
+```
+
+```{r, echo=FALSE}
+
+plot(d$lon, d$lat, col=cl2$cluster+1, 
+     pch=ifelse(cl2$cluster == 0, 8, 1), # Mark noise as star
+     cex=ifelse(cl2$cluster == 0, 0.1, 0.01), # Decrease size of noise
+     xlab=NA, ylab=NA)
+
+```
+
+```{r, echo=FALSE}
+
+plot(d, col=cl3$cluster+1, 
+     pch=ifelse(cl3$cluster == 0, 8, 1), # Mark noise as star
+     cex=ifelse(cl3$cluster == 0, 0.1, 0.01))
+
+```
+
+
+
