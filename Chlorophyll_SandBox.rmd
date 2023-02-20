@@ -123,9 +123,9 @@ package.check <- lapply(
   packages,
   FUN = function(x) {
     if (!require(x, character.only = TRUE)) {
-      #install.packages("./wq_0.4.8.tar.gz", repos=NULL)
+      install.packages("./wq_0.4.8.tar.gz", repos=NULL)
       #package reshape2 needed
-      install.packages("'C:/temp/R/wq_0.4.8.tar.gz", repos=NULL)
+      #install.packages("'C:/temp/R/wq_0.4.8.tar.gz", repos=NULL)
       library(x, character.only = TRUE)
     }
   }
@@ -604,7 +604,10 @@ plot(p2)
 
 ```{r, echo=FALSE}
 
-p1 <- ggplot(dat,aes(x=gradient,color=gradient,after_stat(count))) + geom_density() + ggtitle(paste0("Log10 Year: ",year," Month: ",month))
+#p1 <- ggplot(dat,aes(x=gradient,color=gradient,after_stat(count))) + geom_density() 
+#plot(p1)
+	
+p1 <- ggplot(dat, aes(x = lon, y = lat, fill = gradient)) + geom_tile() + scale_fill_gradient2(low = "white", mid = "blue", high = "red3", midpoint = -1.0) + ggtitle(paste0("Log10 Year: ",year," Month: ",month))
 plot(p1)
 
 ```
