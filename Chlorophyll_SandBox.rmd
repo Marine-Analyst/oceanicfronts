@@ -369,7 +369,7 @@ plt_gradients10[[3]]
 
 ## Monthly composite
 
-```{r, echo=FALSE}
+```{r,  fig.width = 6.5, fig.asp = 2, fig.align = "center", echo=FALSE}
 
 plt_gradients10[[1]]
 
@@ -530,7 +530,7 @@ aplt_chla<-anomalies(imgs=imgs_chla, mpa=mpa, name='Chl-a anomalies', unite='log
 
 ```
 
-```{r, echo=FALSE}
+```{r,  fig.width = 6.5, fig.align = "center", echo=FALSE}
 
 plot(aplt_chla[[4]])
 
@@ -540,7 +540,7 @@ plot(aplt_chla[[4]])
 
 ## Front analysis
 
-Here is an example of one month front analysis. I will be possible to count the fronts, 
+
 
 ```{r, include=FALSE, results='hide'}
 
@@ -579,7 +579,7 @@ dat_chla <- as.data.frame(myMatrixOrdered_chla)
 
 ```
 
-### Map
+### Monthly gradient (ex: January 2021)
 
 ```{r, echo=FALSE}
 
@@ -589,17 +589,6 @@ plot(p2)
 
 ```
 
-### Density
-
-```{r, echo=FALSE}
-
-#p1 <- ggplot(dat,aes(x=gradient,color=gradient,after_stat(count))) + geom_density() 
-#plot(p1)
-	
-p1 <- ggplot(dat, aes(x = lon, y = lat, fill = gradient)) + geom_tile() + scale_fill_gradient2(low = "white", mid = "blue", high = "red3", midpoint = -1.0) + ggtitle(paste0("Log10 Year: ",year," Month: ",month))
-plot(p1)
-
-```
 
 
 
