@@ -34,9 +34,8 @@ gc()
 Sessionid <- 'Chlorophyll Gradients'
 source_provider <- "Copernicus Marine Service"
 source_provider_url <- "https://marine.copernicus.eu"
-layer_title<-"Chl-a gradients 1998-2020"
-layer_sst<-"Sea Surface Temperature gradients 2001-2020"
-layer_Chla<-"Chlorophyll-a gradients 1998-2020"
+layer_title<-"Chl-a gradients 2010-2021"
+layer_Chla<-"Chlorophyll-a gradients 2010-2021"
 
 # Define Region of interest (Bounding Box Longitude/latittude)
 maxlat<- 51.4
@@ -108,9 +107,6 @@ package.check <- lapply(
     }
   }
 )
-
-product_title <- "SST gradients 2001-2018 trends and anomalies"
-short_description <- "Sea surface temperature is the temperature of the water close to the sea surface. SST is a standard product from satellite-based thermal infra-red sensors, and optical sensors complemented with infrared bands. The gradients are processed from Monthly mean sea surface temperature (in degree-C at 4km resolution) derived from the MODIS-TERRA sensor (Satellite remote sensing Ocean color data)."
 
 ```
 
@@ -190,12 +186,8 @@ query<- paste0(' {
 
 my_searchquery <- rjson::toJSON(query)
 
-#http://elk.knowcean.eu/elk/chla_2016-01-01/_search
-#nginx rule :80/elk > :9200 only 'search'
-#url_elk <- 'http://elk.knowcean.eu:9200/chla_'
-#url_elksst <- 'http://elk.knowcean.eu:9200/sst_'
 url_elk <- 'http://elk.knowcean.eu/elk/chla_'
-url_elksst <- 'http://elk.knowcean.eu/elk/sst_'
+
 
 i_stack=0
 for (year in 2010:2021) {
@@ -233,10 +225,6 @@ myMatrixOrdered_chla<-myMatrix_chla[order(myMatrix_chla[,1],decreasing=FALSE),]
 dat_chla <- as.data.frame(myMatrixOrdered_chla)
 
 
-
-#p1 <- ggplot(dat,aes(x=gradient,color=gradient,after_stat(count))) + geom_density() + ggtitle(paste0("Year: ",year," Month: ",month))
-#plot(p1)
-
 p1 <- ggplot(dat, aes(x = lon, y = lat, fill = gradient)) + geom_tile() + scale_fill_gradient2(low = "white", mid = "blue", high = "red3", midpoint = -1.0) + ggtitle(paste0("Year: ",year," Month: ",month))
 plot(p1)
 
@@ -245,6 +233,7 @@ plot(p1)
 ncolras<-length(unique(dat$lon))
 nrowras<-length(unique(dat$lat))
 raster0<-raster(ncols=ncolras,nrows=nrowras,xmn=xmin,xmx=xmax,ymn=ymin,ymx=ymax)
+
 #using rasterize
 dat_raster<-rasterize(x=dat[,1:2],y=raster0,field=dat[,3],fun=mean,na.rm=T)
 plot(dat_raster)
